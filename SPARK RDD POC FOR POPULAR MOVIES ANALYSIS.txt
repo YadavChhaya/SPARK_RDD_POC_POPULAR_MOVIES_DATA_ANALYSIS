@@ -1,0 +1,68 @@
+﻿Spark RDD POC – Popular Movie Analysis
+=======================================
+
+popular_movies.txt Data Definition:
+Column 0:  User ID
+Column 1:  Movie ID
+Column 2:  Rating
+Column 3:  Time stamp
+
+========================================
+Input Dataset Link:
+
+https://drive.google.com/file/d/0Bxr27gVaXO5sbGdjUWFSRUxUMXM/view
+
+Source Code:
+-----------------
+
+hadoop fs -mkdir -p /user/hadoop/input/
+hadoop fs -put /home/cloudera/Downloads/popular_movies.txt /user/hadoop/input/
+spark-shell
+val rdd1 = sc.textFile("hdfs://quickstart.cloudera:8020/user/hadoop/input/popular_movies.txt")
+val rdd2 = rdd1.map{ line => line.toString() }
+val rdd3 = rdd2.map(x=>x.split("\t"))
+val rdd4 = rdd3.filter(x => x.toString().length>=4)
+val rdd5 = rdd4.map{ x=> (x(0).toString, x(1).toString(), x(2).toString(),x(3).toString())  }
+rdd5.count
+
+
+PROBLEM STATEMENT 1: PRINT FIRST 10 RECORDS OF DATASET
+------------------------------------------------------
+
+val rdd5 = rdd4.map{ x=> (x(0).toString, x(1).toString(), x(2).toString(),x(3).toString())  }
+rdd5.take(10).foreach(println)
+
+
+
+PROBLEM STATEMENT 2: 10 highest watches movies where first column 
+indicates movie id and second column indicates occurences. 
+------------------------------------------------------------------
+
+val rdd6 = rdd4.map{ x=> (x(1).toString(),1)  }
+val rdd7 = rdd6.reduceByKey(_+_) 
+val rdd8 = rdd7.map(x => x.swap).sortByKey(false).take(10)
+val rdd9 = rdd8.map(key => key.swap)
+rdd9.foreach(println)
+
+
+PROBLEM STATEMENT 3: PRINT HIGHEST RATED 1O MOVIES alongwith their RATINGS
+--------------------------------------------------------------------------
+
+
+val rdd10 = rdd4.map{ x=> (x(1).toString(),x(2).toInt)  }
+val rdd11 = rdd10.mapValues(x=>(x,1))
+val rdd12 = rdd11.reduceByKey((x,y) => (x._1 + y._1 , x._2 + y._2))
+val rdd13 = rdd12.mapValues{ case(sum,count) => (1.0 * sum)/count    }
+val rdd14 = rdd13.map(key => key.swap).sortByKey(false).take(10)
+val rdd15 = rdd14.map(x => x.swap)
+rdd15.foreach(println)
+
+
+
+
+
+
+
+
+
+
